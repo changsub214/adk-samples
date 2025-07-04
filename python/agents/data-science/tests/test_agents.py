@@ -31,24 +31,23 @@ from data_science.sub_agents.bqml.agent import root_agent as bqml_agent
 from data_science.sub_agents.bigquery.agent import database_agent
 
 session_service = InMemorySessionService()
-artifact_service = InMemoryArtifactService()
-
-
-class TestAgents(unittest.TestCase):
+artifact_service = InMemoryArtifactService() 
+class TestAgents(unittest.IsolatedAsyncioTestCase): 
     """Test cases for the analytics agent and its sub-agents."""
 
-    def setUp(self):
+    async def asyncSetUp(self): 
         """Set up for test methods."""
-        self.session = session_service.create_session(
+        super().setUp() 
+        self.session = await session_service.create_session(
             app_name="DataAgent",
             user_id="test_user",
         )
         self.user_id = "test_user"
-        self.session_id = self.session.id
+        self.session_id = self.session.id 
 
         self.runner = Runner(
             app_name="DataAgent",
-            agent=None,
+            agent=None, 
             artifact_service=artifact_service,
             session_service=session_service,
         )
@@ -71,36 +70,31 @@ class TestAgents(unittest.TestCase):
 
 
     @pytest.mark.db_agent
-    def test_db_agent_can_handle_env_query(self):
-        """Test the db_agent with a query from environment variable."""
+    async def test_db_agent_can_handle_env_query(self):
         query = "what countries exist in the train table?"
         response = self._run_agent(database_agent, query)
         print(response)
-        # self.assertIn("Canada", response)
         self.assertIsNotNone(response)
 
     @pytest.mark.ds_agent
-    def test_ds_agent_can_be_called_from_root(self):
-        """Test the ds_agent from the root agent."""
+    async def test_ds_agent_can_be_called_from_root(self):
         query = "plot the most selling category"
         response = self._run_agent(root_agent, query)
         print(response)
         self.assertIsNotNone(response)
 
     @pytest.mark.bqml
-    def test_bqml_agent_can_check_for_models(self):
-        """Test that the bqml_agent can check for existing models."""
+    async def test_bqml_agent_can_check_for_models(self):
         query = "Are there any existing models in the dataset?"
         response = self._run_agent(bqml_agent, query)
         print(response)
         self.assertIsNotNone(response)
 
     @pytest.mark.bqml
-    def test_bqml_agent_can_execute_code(self):
-        """Test that the bqml_agent can execute BQML code."""
+    async def test_bqml_agent_can_execute_code(self):
         query = """
     I want to train a BigQuery ML model on the sales_train_validation data for sales prediction.
-    Please show me an execution plan. 
+    Please show me an execution plan.
     """
         response = self._run_agent(bqml_agent, query)
         print(response)
@@ -109,8 +103,3 @@ class TestAgents(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-
-    # testagent = TestAgents
-    # testagent.setUp(testagent)
-    # testagent.test_root_agent_can_list_tools(testagent)
-    # testagent.test_db_agent_can_handle_env_query(testagent)
